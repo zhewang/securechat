@@ -28,15 +28,17 @@ public class DES {
 
 		}
 	 */
-	public static void main(String[] args){
-		BitSet plainBlock = StringtoBits("aaaaaaaa");//testing StringtoBits
-		BitSettoHex(plainBlock);
-	}
+	/*public static void main(String[] args){
+	  BitSet plainBlock = StringtoBits("aaaaaaaa");//testing StringtoBits
+	  BitSettoHex(plainBlock);
+	  }*/
 
-	private static void BitSettoHex(BitSet block){
-		for(int k = 0; k < block.toByteArray().length; k++)
-			System.out.printf("%02X",block.toByteArray()[k]);
-		System.out.println();
+	public static void main(String[] args){
+		BitSet plainBlock = StringtoBits("bbbbbbb");//generating 56 bits, no effect for now, waiting for DESf to be implemented
+		BitSet[] keys = new BitSet[2];
+		keys[0] = plainBlock; keys[1] = plainBlock;
+		String cipher = feistelNetwork(1,"aaaaaaaa",keys);//testing feistelNetwork
+		System.out.println(cipher);
 	}
 	private static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
 			StringBuilder outputFile) {
@@ -62,12 +64,31 @@ public class DES {
 	 * TODO: You need to write the DES encryption here.
 	 * @param line
 	 */
+	//for debugging, print a bitset in hex formation
+	private static String BitSettoHex(BitSet block){
+		StringBuilder hex = new StringBuilder();
+		for(int k = 0; k < block.toByteArray().length; k++){
+			String result = String.format("%02X",block.toByteArray()[k]);
+			hex.append(result);
+		}
+		return hex.toString();
+	}
+
+	private static String BitSettoAscii(BitSet block){
+		StringBuilder ascii = new StringBuilder();
+		for(int k = 0; k < block.toByteArray().length; k++){
+			String result = String.format("%c",block.toByteArray()[k]);
+			ascii.append(result);
+		}
+		return ascii.toString();
+	}
 	private static String DES_decrypt(String iVStr, String line) {
 
 		return null;
 	}
 
 	//StringtoBits: transforms ascii text to bits representation
+	//to be used in transforming a plaintext block
 	private static BitSet StringtoBits(String input){
 		//choose input length carefully so that it fits in 64 bits
 		byte[] bytes = input.getBytes();
@@ -75,7 +96,7 @@ public class DES {
 		plainBlock.clear();
 		int i = 0;
 		for(byte b:bytes){
-			System.out.println(b);
+			//System.out.println(b);
 			int j = 0;
 			while(j < 8){
 				if(b%2 == 1)plainBlock.set(i);
@@ -93,9 +114,12 @@ public class DES {
 	private static BitSet DESf(BitSet tmp0, BitSet key){
 		BitSet ans = new BitSet(32);
 		ans.clear();
+		ans.set(1);
+		ans.set(2);
 		return ans;
 	}
 	//feistelnetwork: turns plain(64 bits) into cipher(64 bits), should be called with rounds=16 in DES
+	//keys should be 56 bits BitSet
 	private static String feistelNetwork(int rounds, String plain, BitSet decrypt_keys[]){
 		BitSet plainBlock = StringtoBits(plain);
 		BitSet tmp1 = plainBlock.get(0,31);
@@ -103,17 +127,22 @@ public class DES {
 		BitSet tmp3;
 		int i = 0;
 		while(i < rounds){
+
 			tmp3 = DESf(tmp2,decrypt_keys[i]);
+			tmp3.xor(tmp1);
 			tmp1 = tmp2;
-			tmp1.xor(tmp3);
-			tmp2 = tmp1;
+
+			tmp2 = tmp3;
+			i++;
 		}
 		tmp3 = tmp1;
 		tmp1 = tmp2;
 		tmp2 = tmp3;
+		System.out.println(BitSettoHex(tmp1));
+		System.out.println(BitSettoHex(tmp2));
 		StringBuilder cipher = new StringBuilder();
-		cipher.append(tmp1.toString());
-		cipher.append(tmp2.toString());
+		cipher.append(BitSettoAscii(tmp1));
+		cipher.append(BitSettoAscii(tmp2));
 		return cipher.toString();
 	}
 	private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
