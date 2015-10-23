@@ -144,7 +144,12 @@ public class DES {
 
 	private static void callUseage(int exitStatus) {
 
-		String useage = "Print Usage";
+		String useage = "    -h            List all command line options\n" +
+                        "    -k            Generate a DES key\n" +
+                        "    -e <key>      Specify the key used to encrypt the file\n" +
+                        "    -d <key>      Specify the key used to decrypt the file\n" +
+                        "    -i <path>     Specify the input file\n" +
+                        "    -o <path>     Specify the output file\n";
 
 		System.err.println(useage);
 		System.exit(exitStatus);
