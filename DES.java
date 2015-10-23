@@ -29,12 +29,12 @@ public class DES {
 		}
 	 */
 	/*public static void main(String[] args){
-	  BitSet plainBlock = StringtoBits("aaaaaaaa");//testing StringtoBits
+	  BitSet plainBlock = StringtoBitSet("aaaaaaaa");//testing StringtoBitSet
 	  BitSettoHex(plainBlock);
 	  }*/
 
 	public static void main(String[] args){
-		BitSet plainBlock = StringtoBits("bbbbbbb");//generating 56 bits, no effect for now, waiting for DESf to be implemented
+		BitSet plainBlock = StringtoBitSet("bbbbbbb");//generating 56 bits, no effect for now, waiting for DESf to be implemented
 		BitSet[] keys = new BitSet[2];
 		keys[0] = plainBlock; keys[1] = plainBlock;
 		String cipher = feistelNetwork(1,"aaaaaaaa",keys);//testing feistelNetwork
@@ -64,7 +64,7 @@ public class DES {
 	 * TODO: You need to write the DES encryption here.
 	 * @param line
 	 */
-	//for debugging, print a bitset in hex formation
+	//for debugging, transform a bitset to hex formation
 	private static String BitSettoHex(BitSet block){
 		StringBuilder hex = new StringBuilder();
 		for(int k = 0; k < block.toByteArray().length; k++){
@@ -73,7 +73,7 @@ public class DES {
 		}
 		return hex.toString();
 	}
-
+	//for debugging, transform a bitset to ascii formation
 	private static String BitSettoAscii(BitSet block){
 		StringBuilder ascii = new StringBuilder();
 		for(int k = 0; k < block.toByteArray().length; k++){
@@ -83,13 +83,24 @@ public class DES {
 		return ascii.toString();
 	}
 	private static String DES_decrypt(String iVStr, String line) {
+int blockSize = 8;
+StringBuilder target = new StringBuilder(line.length());
+int batch = line.length() / blockSize;// is it necessary to use ceil or floor?
+BitSet fakeKey = StringtoBitSet("bbbbbbb");
+		BitSet[] keys = new BitSet[2];
+		keys[0] = fakeKey; keys[1] = fakeKey;
 
-		return null;
+
+for(int i = 0; i < batch; i++){
+	String result = feistelNetwork(16,line.substring(i*blockSize,i*blockSize+blockSize-1),keys);
+	target.append(result);
+}
+		return target.toString();
 	}
 
-	//StringtoBits: transforms ascii text to bits representation
+	//StringtoBitset: transforms ascii text to bits representation
 	//to be used in transforming a plaintext block
-	private static BitSet StringtoBits(String input){
+	private static BitSet StringtoBitSet(String input){
 		//choose input length carefully so that it fits in 64 bits
 		byte[] bytes = input.getBytes();
 		BitSet plainBlock = new BitSet(64);
@@ -121,7 +132,7 @@ public class DES {
 	//feistelnetwork: turns plain(64 bits) into cipher(64 bits), should be called with rounds=16 in DES
 	//keys should be 56 bits BitSet
 	private static String feistelNetwork(int rounds, String plain, BitSet decrypt_keys[]){
-		BitSet plainBlock = StringtoBits(plain);
+		BitSet plainBlock = StringtoBitSet(plain);
 		BitSet tmp1 = plainBlock.get(0,31);
 		BitSet tmp2 = plainBlock.get(32,63);
 		BitSet tmp3;
