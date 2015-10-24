@@ -164,11 +164,14 @@ public class DES {
             PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 
             String encryptedText;
-            for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
-                line = line + "\n";
-                encryptedText = DES_encrypt(line, keyStr);
-                writer.print(encryptedText);
-            }
+            String plaintext = new String(Files.readAllBytes(Paths.get(inputFile.toString())));
+            encryptedText = DES_encrypt(plaintext, keyStr);
+            writer.print(encryptedText);
+            //for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
+                //line = line + "\n";
+                //encryptedText = DES_encrypt(line, keyStr);
+                //writer.print(encryptedText);
+            //}
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -191,9 +194,14 @@ public class DES {
      * @param block The block to be padded
      * @return String Padded block
      */
-    private static String PKCS5(String block) {
-        // TODO: implement
-        return null;
+    private static String Padding_PKCS5(String block) {
+        BitSet block_bit = StringtoBitSet(block);
+        int padding_length = 8 - block.length()%8;
+        char padding_char = (char)padding_length;
+        for(int i = 0; i < padding_length; i ++) {
+            block = block+padding_char;
+        }
+        return block;
     }
 
     /**
@@ -203,15 +211,13 @@ public class DES {
      */
     private static String DES_encrypt(String line, StringBuilder keyStr) {
         int blockSize = 8; // 8 bytes = 64 bits
-        int batch = (int)Math.ceil(line.length() / blockSize);
+        int batch = (int)Math.ceil(line.length()*1.0 / blockSize);
         StringBuilder ciphertext = new StringBuilder();
         BitSet[] EncryptKeys = keyExpansion(keyStr, "e");
+        String line_padded = Padding_PKCS5(line);
 
         for(int i = 0; i < batch; i++){
-            String block = line.substring(i*blockSize,i*blockSize+blockSize-1);
-            if (i == batch - 1) { // padding for last block
-                block = PKCS5(block);
-            }
+            String block = line_padded.substring(i*blockSize,i*blockSize+blockSize);
             String result = feistelNetwork(16, block, EncryptKeys);
             ciphertext.append(result+"\n");
         }
