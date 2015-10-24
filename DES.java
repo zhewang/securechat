@@ -164,14 +164,11 @@ public class DES {
             PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 
             String encryptedText;
+
+            // read input as a single string
             String plaintext = new String(Files.readAllBytes(Paths.get(inputFile.toString())));
             encryptedText = DES_encrypt(plaintext, keyStr);
             writer.print(encryptedText);
-            //for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
-                //line = line + "\n";
-                //encryptedText = DES_encrypt(line, keyStr);
-                //writer.print(encryptedText);
-            //}
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
