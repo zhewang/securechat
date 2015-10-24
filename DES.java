@@ -9,7 +9,6 @@ import java.lang.Math;
 
 import gnu.getopt.Getopt;
 
-import SBoxes;
 
 public class DES {
 
@@ -25,6 +24,17 @@ public class DES {
 		, 59, 51, 43, 35, 27, 19, 11, 3
 		, 61, 53, 45, 37, 29, 21, 13, 5
 		, 63, 55, 47, 39, 31, 23, 15, 7
+	};
+
+	private static int[] TestBox = {
+        0, 1,2,3,4,5,6,7,8,
+        9,10,11,12,13,14,15,16,
+        17,18,19,20,21,22,23,24,
+        25,26,27,28,29,30,31,32,
+        33,34,35,36,37,38,39,40,
+        41,42,43,44,45,46,47,48,
+        49,50,51,52,53,54,55,56,
+        57,58,59,60,61,62,63
 	};
 
     /**
@@ -112,6 +122,7 @@ public class DES {
         }
         return ascii.toString();
     }
+
     private static String DES_decrypt(String iVStr, String line) {
         int blockSize = 8;
         StringBuilder target = new StringBuilder(line.length());
@@ -122,7 +133,8 @@ public class DES {
 
 
         for(int i = 0; i < batch; i++){
-            String result = feistelNetwork(16,line.substring(i*blockSize,i*blockSize+blockSize-1),keys);
+            BitSet block = StringtoBitSet(line.substring(i*blockSize,i*blockSize+blockSize-1));
+            String result = feistelNetwork(16, block, keys);
             target.append(result);
         }
         return target.toString();
@@ -159,8 +171,7 @@ public class DES {
     }
     //feistelnetwork: turns plain(64 bits) into cipher(64 bits), should be called with rounds=16 in DES
     //keys should be 56 bits BitSet
-    private static String feistelNetwork(int rounds, String plain, BitSet decrypt_keys[]){
-        BitSet plainBlock = StringtoBitSet(plain);
+    private static String feistelNetwork(int rounds, BitSet plainBlock, BitSet decrypt_keys[]){
         BitSet tmp1 = plainBlock.get(0,31);
         BitSet tmp2 = plainBlock.get(32,63);
         BitSet tmp3;
@@ -214,6 +225,35 @@ public class DES {
         return null;
     }
 
+    private static void printBitSet(BitSet bset){
+        for(int i = 0; i < bset.size(); i ++) {
+            if(i % 8 == 0) {
+                System.out.print(" ");
+            }
+            if(bset.get(i) == true) {
+                System.out.print("1");
+            } else {
+                System.out.print("0");
+            }
+        }
+        System.out.print("\n");
+    }
+
+    private static void permutation(BitSet original, int[] sbox) {
+        if(original.size() != 64) {
+            throw new IllegalArgumentException("Block size is not 64 bit.");
+        }
+
+        BitSet permuted = new BitSet(64);
+        for(int i = 0; i < 64; i ++) {
+            if(original.get(sbox[i]-1) == true) {
+                permuted.set(i);
+            }
+        }
+
+        original = permuted;
+    }
+
     /**
      * Use PKCS5 padding algorithm to pad block
      * @param block The block to be padded
@@ -242,8 +282,10 @@ public class DES {
         String line_padded = Padding_PKCS5(line);
 
         for(int i = 0; i < batch; i++){
-            String block = line_padded.substring(i*blockSize,i*blockSize+blockSize);
+            BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
+            permutation(block, DES.IP); // Initial permutation
             String result = feistelNetwork(16, block, EncryptKeys);
+            permutation(block, DES.FP); // Initial permutation
             ciphertext.append(result+"\n");
         }
         return ciphertext.toString();
