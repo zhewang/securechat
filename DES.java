@@ -4,13 +4,13 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.BitSet;
+import java.lang.Math;
 
 import gnu.getopt.Getopt;
-import java.util.BitSet;
 
 public class DES {
-
-    /*	public static void main(String[] args) {
+	public static void main(String[] args) {
 
         StringBuilder inputFile = new StringBuilder();
         StringBuilder outputFile = new StringBuilder();
@@ -20,26 +20,27 @@ public class DES {
         pcl(args, inputFile, outputFile, keyStr, encrypt);
 
         if(keyStr.toString() != "" && encrypt.toString().equals("e")){
-        encrypt(keyStr, inputFile, outputFile);
+            encrypt(keyStr, inputFile, outputFile);
         } else if(keyStr.toString() != "" && encrypt.toString().equals("d")){
-        decrypt(keyStr, inputFile, outputFile);
+            decrypt(keyStr, inputFile, outputFile);
         }
 
 
     }
-    */
+
     /*public static void main(String[] args){
       BitSet plainBlock = StringtoBitSet("aaaaaaaa");//testing StringtoBitSet
       BitSettoHex(plainBlock);
       }*/
 
-    public static void main(String[] args){
-        BitSet plainBlock = StringtoBitSet("bbbbbbb");//generating 56 bits, no effect for now, waiting for DESf to be implemented
-        BitSet[] keys = new BitSet[2];
-        keys[0] = plainBlock; keys[1] = plainBlock;
-        String cipher = feistelNetwork(1,"aaaaaaaa",keys);//testing feistelNetwork
-        System.out.println(cipher);
-    }
+    //public static void main(String[] args){
+        //BitSet plainBlock = StringtoBitSet("bbbbbbb");//generating 56 bits, no effect for now, waiting for DESf to be implemented
+        //BitSet[] keys = new BitSet[2];
+        //keys[0] = plainBlock; keys[1] = plainBlock;
+        //String cipher = feistelNetwork(1,"aaaaaaaa",keys);//testing feistelNetwork
+        //System.out.println(cipher);
+    //}
+
     private static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
             StringBuilder outputFile) {
         try {
@@ -164,23 +165,56 @@ public class DES {
 
             String encryptedText;
             for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
-                encryptedText = DES_encrypt(line);
+                encryptedText = DES_encrypt(line, keyStr);
                 writer.print(encryptedText);
             }
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
-    /**
-     * TODO: You need to write the DES encryption here.
-     * @param line
-     */
-    private static String DES_encrypt(String line) {
 
+
+    /**
+     * Generate key for each round based on encryption or decryption
+     * @param keyStr The key string
+     * @param type Encryption or Decryption. Values are 'e' or 'd'.
+     * @return BitSet[] A list of keys for each round
+     */
+    private static BitSet[] keyExpansion(StringBuilder keyStr, String type) {
         return null;
+    }
+
+    /**
+     * Use PKCS5 padding algorithm to pad block
+     * @param block The block to be padded
+     * @return String Padded block
+     */
+    private static String PKCS5(String block) {
+        // TODO: implement
+        return null;
+    }
+
+    /**
+     * The DES encryption function
+     * @param line The input plaintext
+     * @return String The encrypted cyphertext
+     */
+    private static String DES_encrypt(String line, StringBuilder keyStr) {
+        int blockSize = 8; // 8 bytes = 64 bits
+        int batch = (int)Math.ceil(line.length() / blockSize);
+        StringBuilder ciphertext = new StringBuilder();
+        BitSet[] EncryptKeys = keyExpansion(keyStr, "e");
+
+        for(int i = 0; i < batch; i++){
+            String block = line.substring(i*blockSize,i*blockSize+blockSize-1);
+            if (i == batch - 1) { // padding for last block
+                block = PKCS5(block);
+            }
+            String result = feistelNetwork(16, block, EncryptKeys);
+            ciphertext.append(result+"\n");
+        }
+        return ciphertext.toString();
     }
 
 
@@ -192,8 +226,6 @@ public class DES {
 
     /**
      * This function Processes the Command Line Arguments.
-     * -p for the port number you are using
-     * -h for the host name of system
      */
     private static void pcl(String[] args, StringBuilder inputFile,
             StringBuilder outputFile, StringBuilder keyString,
