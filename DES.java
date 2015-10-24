@@ -9,6 +9,10 @@ import java.lang.Math;
 
 import gnu.getopt.Getopt;
 
+// TODO: key expansion
+// TODO: f function
+// TODO: CBC mode
+
 
 public class DES {
 
