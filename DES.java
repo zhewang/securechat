@@ -14,7 +14,6 @@ import gnu.getopt.Getopt;
 
 // TODO: key expansion
 // TODO: f function
-// TODO: CBC mode debug
 
 
 public class DES {
@@ -83,10 +82,10 @@ public class DES {
             List<String> lines = Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset());
 
             String IVStr = lines.get(0);
-            BitSet lastCBC = StringtoBitSet(IVStr);
-            System.out.println(BitSettoHex(lastCBC));
+            BitSet lastCBC = HextoBitSet(IVStr);
 
             BitSet decrypted;
+
             for (int i = 1; i < lines.size(); i ++) {
                 String line = lines.get(i);
                 if(line.length() != 16) {
@@ -327,7 +326,6 @@ public class DES {
         StringBuilder ciphertext = new StringBuilder();
         BitSet lastCBC = getCBC_IV();
         ciphertext.append(BitSettoHex(lastCBC)+"\n");
-        System.out.println(BitSettoHex(lastCBC));
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
 
