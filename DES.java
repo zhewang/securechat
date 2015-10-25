@@ -93,10 +93,11 @@ public class DES {
                     throw new IllegalArgumentException("Decrypt block size should be 64 bits.");
                 }
                 BitSet block = HextoBitSet(line);
+                BitSet tmp = block;
 
                 decrypted = DES_decrypt(block, keyStr);
                 //decrypted.xor(lastCBC);
-                lastCBC = block;
+                lastCBC = tmp;
 
                 writer.print(BitSettoAscii(decrypted));
             }
@@ -143,7 +144,8 @@ public class DES {
     private static BitSet HextoBitSet(String input){
         //choose input length carefully so that it fits in 64 bits
         BigInteger bigint = new BigInteger(input, 16);
-        byte[] content = Arrays.copyOfRange(bigint.toByteArray(), 1, bigint.toByteArray().length);
+        //byte[] content = Arrays.copyOfRange(bigint.toByteArray(), 1, bigint.toByteArray().length);
+        byte[] content = bigint.toByteArray();
         BitSet bits = BitSet.valueOf(content);
         return bits;
     }
