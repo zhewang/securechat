@@ -83,11 +83,12 @@ public class DES {
             List<String> lines = Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset());
 
             String IVStr = lines.get(0);
-            lines.remove(0);
             BitSet lastCBC = StringtoBitSet(IVStr);
+            System.out.println(BitSettoHex(lastCBC));
 
             BitSet decrypted;
-            for (String line : lines) {
+            for (int i = 1; i < lines.size(); i ++) {
+                String line = lines.get(i);
                 if(line.length() != 16) {
                     throw new IllegalArgumentException("Decrypt block size should be 64 bits.");
                 }
@@ -95,7 +96,7 @@ public class DES {
                 BitSet tmp = block;
 
                 decrypted = DES_decrypt(block, keyStr);
-                //decrypted.xor(lastCBC);
+                decrypted.xor(lastCBC);
                 lastCBC = tmp;
 
                 writer.print(BitSettoAscii(decrypted));
@@ -142,8 +143,10 @@ public class DES {
     private static BitSet HextoBitSet(String input){
         //choose input length carefully so that it fits in 64 bits
         BigInteger bigint = new BigInteger(input, 16);
-        //byte[] content = Arrays.copyOfRange(bigint.toByteArray(), 1, bigint.toByteArray().length);
         byte[] content = bigint.toByteArray();
+        if(content.length == 9) {
+            content = Arrays.copyOfRange(content, 1, content.length);
+        }
         BitSet bits = BitSet.valueOf(content);
         return bits;
     }
@@ -210,10 +213,6 @@ public class DES {
             }
         }
         return cipher;
-        //StringBuilder cipher = new StringBuilder();
-        //cipher.append(BitSettoAscii(tmp1));
-        //cipher.append(BitSettoAscii(tmp2));
-        //return cipher.toString();
     }
 
     private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
@@ -328,11 +327,12 @@ public class DES {
         StringBuilder ciphertext = new StringBuilder();
         BitSet lastCBC = getCBC_IV();
         ciphertext.append(BitSettoHex(lastCBC)+"\n");
+        System.out.println(BitSettoHex(lastCBC));
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
 
             // Using CBC mode
-            //block.xor(lastCBC);
+            block.xor(lastCBC);
 
             // Encrypt
             permutation(block, DES.IP); // Initial permutation
