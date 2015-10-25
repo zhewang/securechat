@@ -14,8 +14,7 @@ import gnu.getopt.Getopt;
 
 // TODO: key expansion
 // TODO: f function
-// TODO: CBC mode
-// TODO: Debug Decryption
+// TODO: CBC mode debug
 
 
 public class DES {
