@@ -12,8 +12,9 @@ import java.math.BigInteger;
 
 import gnu.getopt.Getopt;
 
-// TODO: key expansion
-// TODO: f function
+// TODO: Implement key expansion
+// TODO: Implement f function
+// TODO: Implement genKeys
 
 
 public class DES {
@@ -61,19 +62,6 @@ public class DES {
             decrypt(keyStr, inputFile, outputFile);
         }
     }
-
-    //public static void main(String[] args){
-        //BitSet bset = StringtoBitSet("BC6D211577A50B74");
-        //System.out.println(BitSettoAscii(bset));
-    //}
-
-    //public static void main(String[] args){
-        //BitSet plainBlock = StringtoBitSet("bbbbbbb");//generating 56 bits, no effect for now, waiting for DESf to be implemented
-        //BitSet[] keys = new BitSet[2];
-        //keys[0] = plainBlock; keys[1] = plainBlock;
-        //String cipher = feistelNetwork(1,"aaaaaaaa",keys);//testing feistelNetwork
-        //System.out.println(cipher);
-    //}
 
     private static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
             StringBuilder outputFile) {
@@ -124,59 +112,61 @@ public class DES {
         return result;
     }
 
-    //for debugging, transform a bitset to hex formation
-    private static String BitSettoHex(BitSet block){
-        StringBuilder hex = new StringBuilder();
-        for(int k = 0; k < block.toByteArray().length; k++){
-            String result = String.format("%02X",block.toByteArray()[k]);
-            hex.append(result);
-        }
-        return hex.toString();
-    }
-    //for debugging, transform a bitset to ascii formation
-    private static String BitSettoAscii(BitSet block){
-        byte[] b = block.toByteArray();
-        String str = new String(b);
-        return str;
-    }
+    private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
+            StringBuilder outputFile) {
 
-    // Transform Hex string to BitSet
-    private static BitSet HextoBitSet(String input){
-        //choose input length carefully so that it fits in 64 bits
-        BigInteger bigint = new BigInteger(input, 16);
-        byte[] content = bigint.toByteArray();
-        if(content.length > 8) {
-            content = Arrays.copyOfRange(content, 1, content.length);
+        try {
+            PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
+
+            String encryptedText;
+
+            // read input as a single string
+            String plaintext = new String(Files.readAllBytes(Paths.get(inputFile.toString())));
+            encryptedText = DES_encrypt(plaintext, keyStr);
+            writer.print(encryptedText);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        if(content.length < 8) {
-            byte[] tmp = content;
-            content = new byte[8];
-            for(int i = 0; i < tmp.length; i ++)
-                content[8-i-1] = tmp[tmp.length-i-1];
-        }
-        BitSet bits = BitSet.valueOf(content);
-        return bits;
     }
 
-    //StringtoBitset: transforms ascii text to bits representation
-    //to be used in transforming a plaintext block
-    private static BitSet StringtoBitSet(String input){
-        //choose input length carefully so that it fits in 64 bits
-        byte[] bytes = input.getBytes();
-        BitSet plainBlock = new BitSet(64);
-        plainBlock.clear();
-        int i = 0;
-        for(byte b:bytes){
-            //System.out.println(b);
-            int j = 0;
-            while(j < 8){
-                if(b%2 == 1)plainBlock.set(i);
-                i++;j++;
-                b >>= 1;
-            }
-        }
+    /**
+     * The DES encryption function
+     * @param line The input plaintext
+     * @return String The encrypted cyphertext
+     */
+    private static String DES_encrypt(String line, StringBuilder keyStr) {
+        int blockSize = 8; // 8 bytes = 64 bits
+        int batch = (int)Math.ceil(line.length()*1.0 / blockSize);
 
-        return plainBlock;
+        BitSet[] EncryptKeys = keyExpansion(keyStr, "e");
+
+        String line_padded = Padding_PKCS5(line);
+        StringBuilder ciphertext = new StringBuilder();
+        BitSet lastCBC = getCBC_IV();
+        ciphertext.append(BitSettoHex(lastCBC)+"\n");
+        for(int i = 0; i < batch; i++){
+            BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
+
+            // Using CBC mode
+            block.xor(lastCBC);
+
+            // Encrypt
+            permutation(block, DES.IP); // Initial permutation
+            BitSet result = feistelNetwork(16, block, EncryptKeys);
+            permutation(result, DES.FP); // Final permutation
+
+            lastCBC = result;
+
+            ciphertext.append(BitSettoHex(result)+"\n");
+        }
+        return ciphertext.toString();
+    }
+
+
+    static void genDESkey(){
+        System.out.println("New key goes here");
+        return;
     }
 
     //DESf: the f function used by feistel Network
@@ -218,25 +208,6 @@ public class DES {
         }
         return cipher;
     }
-
-    private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
-            StringBuilder outputFile) {
-
-        try {
-            PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
-
-            String encryptedText;
-
-            // read input as a single string
-            String plaintext = new String(Files.readAllBytes(Paths.get(inputFile.toString())));
-            encryptedText = DES_encrypt(plaintext, keyStr);
-            writer.print(encryptedText);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 
     /**
      * Generate key for each round based on encryption or decryption
@@ -335,47 +306,70 @@ public class DES {
     }
 
     /**
-     * The DES encryption function
-     * @param line The input plaintext
-     * @return String The encrypted cyphertext
+     * Transform a bitset to hex string
      */
-    private static String DES_encrypt(String line, StringBuilder keyStr) {
-        int blockSize = 8; // 8 bytes = 64 bits
-        int batch = (int)Math.ceil(line.length()*1.0 / blockSize);
-
-        BitSet[] EncryptKeys = keyExpansion(keyStr, "e");
-
-        String line_padded = Padding_PKCS5(line);
-        StringBuilder ciphertext = new StringBuilder();
-        BitSet lastCBC = getCBC_IV();
-        ciphertext.append(BitSettoHex(lastCBC)+"\n");
-        for(int i = 0; i < batch; i++){
-            BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
-
-            // Using CBC mode
-            block.xor(lastCBC);
-
-            // Encrypt
-            permutation(block, DES.IP); // Initial permutation
-            BitSet result = feistelNetwork(16, block, EncryptKeys);
-            permutation(result, DES.FP); // Final permutation
-
-            lastCBC = result;
-
-            ciphertext.append(BitSettoHex(result)+"\n");
+    private static String BitSettoHex(BitSet block){
+        StringBuilder hex = new StringBuilder();
+        for(int k = 0; k < block.toByteArray().length; k++){
+            String result = String.format("%02X",block.toByteArray()[k]);
+            hex.append(result);
         }
-        return ciphertext.toString();
+        return hex.toString();
     }
-
-
-    static void genDESkey(){
-        System.out.println("New key goes here");
-        return;
-    }
-
 
     /**
-     * This function Processes the Command Line Arguments.
+     * Transform a bitset to ascii string
+     */
+    private static String BitSettoAscii(BitSet block){
+        byte[] b = block.toByteArray();
+        String str = new String(b);
+        return str;
+    }
+
+    /**
+     * Transform Hex string to BitSet
+     */
+    private static BitSet HextoBitSet(String input){
+        //choose input length carefully so that it fits in 64 bits
+        BigInteger bigint = new BigInteger(input, 16);
+        byte[] content = bigint.toByteArray();
+        if(content.length > 8) {
+            content = Arrays.copyOfRange(content, 1, content.length);
+        }
+        if(content.length < 8) {
+            byte[] tmp = content;
+            content = new byte[8];
+            for(int i = 0; i < tmp.length; i ++)
+                content[8-i-1] = tmp[tmp.length-i-1];
+        }
+        BitSet bits = BitSet.valueOf(content);
+        return bits;
+    }
+
+    /**
+     * Transforms ascii string to bitset
+     */
+    private static BitSet StringtoBitSet(String input){
+        //choose input length carefully so that it fits in 64 bits
+        byte[] bytes = input.getBytes();
+        BitSet plainBlock = new BitSet(64);
+        plainBlock.clear();
+        int i = 0;
+        for(byte b:bytes){
+            //System.out.println(b);
+            int j = 0;
+            while(j < 8){
+                if(b%2 == 1)plainBlock.set(i);
+                i++;j++;
+                b >>= 1;
+            }
+        }
+
+        return plainBlock;
+    }
+
+    /**
+     * Processes the Command Line Arguments.
      */
     private static void pcl(String[] args, StringBuilder inputFile,
             StringBuilder outputFile, StringBuilder keyString,
