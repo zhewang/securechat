@@ -265,9 +265,21 @@ public class DES {
     }
 
 
-    static void genDESkey(){
-        System.out.println("New key goes here");
+    private static void genDESkey(){
+        BitSet key = new BitSet(64);
+        SecureRandom generator = new SecureRandom();
+        generator.setSeed(System.currentTimeMillis());
+        do {
+            for(int i = 0; i < 64; i ++) {
+                key.set(i, generator.nextBoolean());
+            }
+        } while (!isWeakKey(key));
+        System.out.println(BitSettoHex(key));
         return;
+    }
+
+    private static boolean isWeakKey(BitSet key) {
+        return false;
     }
 
     /**
