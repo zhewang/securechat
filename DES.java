@@ -65,9 +65,8 @@ public class DES {
     }
 
     //public static void main(String[] args){
-        //BitSet bset = HextoBitSet("BC6D211577A50B74");
-        //System.out.println(bset.size());
-        //System.out.println(BitSettoHex(bset));
+        //BitSet bset = StringtoBitSet("BC6D211577A50B74");
+        //System.out.println(BitSettoAscii(bset));
     //}
 
     //public static void main(String[] args){
@@ -96,8 +95,9 @@ public class DES {
                 BitSet block = HextoBitSet(line);
 
                 decrypted = DES_decrypt(block, keyStr);
-                decrypted.xor(lastCBC);
+                //decrypted.xor(lastCBC);
                 lastCBC = block;
+
                 writer.print(BitSettoAscii(decrypted));
             }
             writer.close();
@@ -116,7 +116,8 @@ public class DES {
         BitSet[] keys = keyExpansion(keyStr, "d");
 
         permutation(block, DES.IP); // Initial permutation
-        BitSet result = feistelNetwork(16, block, keys);
+        //BitSet result = feistelNetwork(16, block, keys);
+        BitSet result = block;
         permutation(result, DES.FP); // Final permutation
 
         return result;
@@ -133,12 +134,9 @@ public class DES {
     }
     //for debugging, transform a bitset to ascii formation
     private static String BitSettoAscii(BitSet block){
-        StringBuilder ascii = new StringBuilder();
-        for(int k = 0; k < block.toByteArray().length; k++){
-            String result = String.format("%c",block.toByteArray()[k]);
-            ascii.append(result);
-        }
-        return ascii.toString();
+        byte[] b = block.toByteArray();
+        String str = new String(b);
+        return str;
     }
 
     // Transform Hex string to BitSet
@@ -334,12 +332,13 @@ public class DES {
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
 
             // Using CBC mode
-            block.xor(lastCBC);
+            //block.xor(lastCBC);
 
             // Encrypt
             permutation(block, DES.IP); // Initial permutation
-            BitSet result = feistelNetwork(16, block, EncryptKeys);
-            permutation(result, DES.FP); // Initial permutation
+            //BitSet result = feistelNetwork(16, block, EncryptKeys);
+            BitSet result = block;
+            permutation(result, DES.FP); // Final permutation
             lastCBC = result;
 
             ciphertext.append(BitSettoHex(result)+"\n");
