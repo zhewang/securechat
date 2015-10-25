@@ -116,10 +116,9 @@ public class DES {
     private static BitSet DES_decrypt(BitSet block, StringBuilder keyStr) {
         BitSet[] keys = keyExpansion(keyStr, "d");
 
-        permutation(block, DES.IP); // Initial permutation
-        //BitSet result = feistelNetwork(16, block, keys);
-        BitSet result = block;
-        permutation(result, DES.FP); // Final permutation
+        permutation(block, DES.FP); // Initial permutation
+        BitSet result = feistelNetwork(16, block, keys);
+        permutation(result, DES.IP); // Final permutation
 
         return result;
     }
@@ -338,8 +337,7 @@ public class DES {
 
             // Encrypt
             permutation(block, DES.IP); // Initial permutation
-            //BitSet result = feistelNetwork(16, block, EncryptKeys);
-            BitSet result = block;
+            BitSet result = feistelNetwork(16, block, EncryptKeys);
             permutation(result, DES.FP); // Final permutation
             lastCBC = result;
 
