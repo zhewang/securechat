@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.BitSet;
+import java.security.SecureRandom;
 import java.lang.Math;
 
 import gnu.getopt.Getopt;
@@ -234,6 +235,9 @@ public class DES {
         return keys;
     }
 
+    /**
+     * Print BitSet as 1s and 0s
+     */
     private static void printBitSet(BitSet bset){
         for(int i = 0; i < bset.size(); i ++) {
             if(i % 8 == 0) {
@@ -248,6 +252,9 @@ public class DES {
         System.out.print("\n");
     }
 
+    /**
+     * Initial or Final Permutation
+     */
     private static void permutation(BitSet original, int[] sbox) {
         if(original.size() != 64) {
             throw new IllegalArgumentException("Block size is not 64 bit.");
@@ -261,6 +268,19 @@ public class DES {
         }
 
         original = permuted;
+    }
+
+    /**
+     * Generate IV for CBC mode
+     */
+    private static BitSet getCBC_IV() {
+        BitSet CBC_IV = new BitSet(64);
+        SecureRandom generator = new SecureRandom();
+        generator.setSeed(System.currentTimeMillis());
+        for(int i = 0; i < 64; i ++) {
+            CBC_IV.set(i, generator.nextBoolean());
+        }
+        return CBC_IV;
     }
 
     /**
@@ -291,11 +311,20 @@ public class DES {
 
         String line_padded = Padding_PKCS5(line);
         StringBuilder ciphertext = new StringBuilder();
+        BitSet lastCBC = getCBC_IV();
+        ciphertext.append(BitSettoHex(lastCBC)+"\n");
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
+
+            // Using CBC mode
+            block.xor(lastCBC);
+
+            // Encrypt
             permutation(block, DES.IP); // Initial permutation
             BitSet result = feistelNetwork(16, block, EncryptKeys);
             permutation(result, DES.FP); // Initial permutation
+            lastCBC = result;
+
             ciphertext.append(BitSettoHex(result)+"\n");
         }
         return ciphertext.toString();
