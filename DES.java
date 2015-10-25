@@ -273,13 +273,49 @@ public class DES {
             for(int i = 0; i < 64; i ++) {
                 key.set(i, generator.nextBoolean());
             }
-        } while (!isWeakKey(key));
+        } while (isWeakKey(key));
         System.out.println(BitSettoHex(key));
         return;
     }
 
     private static boolean isWeakKey(BitSet key) {
-        return false;
+        String[] weak_patterns = {
+            "0p0p0p0p0p0p0p0p", "0p1P0p1P0p0P0p0P",
+            "0pep0pep0pfp0pfp", "0pfP0pfP0pfP0pfP",
+            "1P0p1P0p0P0p0P0p", "1P1P1P1P0P0P0P0P",
+            "1Pep1Pep0Pfp0Pfp", "1PfP1PfP0PfP0PfP",
+            "ep0pep0pfp0pfp0p", "ep1Pep1pfp0Pfp0P",
+            "epepepepepepepep", "epfPepfPfpfPfpfP",
+            "fP0pfP0pfP0pfP0p", "fP1PfP1PfP0PfP0P",
+            "fPepfPepfPepfPep", "fPfPfPfPfPfPfPfP"};
+        String keyStr = BitSettoHex(key).toLowerCase();
+        boolean isSame = true;
+        for(int i = 0; i < 16; i ++) {
+            String pattern = weak_patterns[i];
+            isSame = true;
+            for(int j = 0; j < 16; j ++) {
+                if(pattern.charAt(j) == 'p'){
+                    if(keyStr.charAt(j) != '0' && keyStr.charAt(j) != '1') {
+                        isSame = false;
+                        break;
+                    }
+                } else if(pattern.charAt(j) == 'P') {
+                    if(keyStr.charAt(j) != 'e' && keyStr.charAt(j) != 'f') {
+                        isSame = false;
+                        break;
+                    }
+                } else {
+                    if(keyStr.charAt(j) != pattern.charAt(j)) {
+                        isSame = false;
+                        break;
+                    }
+                }
+            }
+            if(isSame == true) {
+                break;
+            }
+        }
+        return isSame;
     }
 
     /**
