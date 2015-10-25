@@ -91,14 +91,11 @@ public class DES {
                     throw new IllegalArgumentException("Decrypt block size should be 64 bits.");
                 }
                 BitSet block = HextoBitSet(line);
-                BitSet tmp = block;
 
                 decrypted = DES_decrypt(block, keyStr);
-                //decrypted.xor(lastCBC);
-                lastCBC = tmp;
+                decrypted.xor(lastCBC);
+                lastCBC = block;
 
-                System.out.println("Decrypted Block: ");
-                System.out.println(BitSettoHex(decrypted));
                 if(i == lines.size()-1) {
                     writer.print(Delete_Padding_PKCS5(decrypted));
                 } else {
@@ -185,18 +182,15 @@ public class DES {
     //DESf: the f function used by feistel Network
     //todo: now it just returns all 0
     private static BitSet DESf(BitSet tmp0, BitSet key){
-        BitSet ans = new BitSet(32);
-        ans.clear();
-        ans.set(1);
-        ans.set(2);
-        return ans;
+        BitSet result = new BitSet(64);
+        return result;
     }
 
     //feistelnetwork: turns plain(64 bits) into cipher(64 bits), should be called with rounds=16 in DES
     //keys should be 56 bits BitSet
     private static BitSet feistelNetwork(int rounds, BitSet plainBlock, BitSet keys[]){
-        BitSet tmp1 = plainBlock.get(0,31);
-        BitSet tmp2 = plainBlock.get(32,63);
+        BitSet tmp1 = plainBlock.get(0,32);
+        BitSet tmp2 = plainBlock.get(32,64);
         BitSet tmp3;
         int i = 0;
         while(i < rounds){
@@ -304,8 +298,7 @@ public class DES {
         for(int i = 0; i < 64; i ++) {
             CBC_IV.set(i, generator.nextBoolean());
         }
-        //return CBC_IV;
-        return HextoBitSet("000fffffffffffff");
+        return CBC_IV;
     }
 
     /**
@@ -358,16 +351,15 @@ public class DES {
         ciphertext.append(BitSettoHex(lastCBC)+"\n");
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
-            System.out.print("Original Padded Block: ");
-            System.out.println(BitSettoHex(block));
 
             // Using CBC mode
-            //block.xor(lastCBC);
+            block.xor(lastCBC);
 
             // Encrypt
             permutation(block, DES.IP); // Initial permutation
             BitSet result = feistelNetwork(16, block, EncryptKeys);
             permutation(result, DES.FP); // Final permutation
+
             lastCBC = result;
 
             ciphertext.append(BitSettoHex(result)+"\n");
