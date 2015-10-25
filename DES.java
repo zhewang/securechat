@@ -138,7 +138,7 @@ public class DES {
     /**
      * f function: P-Box Substitution
      */
-	public static int[] P = {
+	private static int[] P = {
 		16, 7, 20, 21,
 		29, 12, 28, 17,
 		1, 15, 23, 26,
