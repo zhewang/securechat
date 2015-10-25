@@ -3,10 +3,12 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.BitSet;
 import java.security.SecureRandom;
 import java.lang.Math;
+import java.math.BigInteger;
 
 import gnu.getopt.Getopt;
 
@@ -46,7 +48,7 @@ public class DES {
 		, 33, 1, 41, 9, 49, 17, 57, 25
 	};
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 
         StringBuilder inputFile = new StringBuilder();
         StringBuilder outputFile = new StringBuilder();
@@ -62,10 +64,11 @@ public class DES {
         }
     }
 
-    /*public static void main(String[] args){
-      BitSet plainBlock = StringtoBitSet("aaaaaaaa");//testing StringtoBitSet
-      BitSettoHex(plainBlock);
-      }*/
+    //public static void main(String[] args){
+        //BitSet bset = HextoBitSet("BC6D211577A50B74");
+        //System.out.println(bset.size());
+        //System.out.println(BitSettoHex(bset));
+    //}
 
     //public static void main(String[] args){
         //BitSet plainBlock = StringtoBitSet("bbbbbbb");//generating 56 bits, no effect for now, waiting for DESf to be implemented
@@ -80,13 +83,22 @@ public class DES {
         try {
             PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
             List<String> lines = Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset());
+
             String IVStr = lines.get(0);
             lines.remove(0);
-            String encryptedText;
+            BitSet lastCBC = StringtoBitSet(IVStr);
 
+            BitSet decrypted;
             for (String line : lines) {
-                encryptedText = DES_decrypt(IVStr, line);
-                writer.print(encryptedText);
+                if(line.length() != 16) {
+                    throw new IllegalArgumentException("Decrypt block size should be 64 bits.");
+                }
+                BitSet block = HextoBitSet(line);
+
+                decrypted = DES_decrypt(block, keyStr);
+                decrypted.xor(lastCBC);
+                lastCBC = block;
+                writer.print(BitSettoAscii(decrypted));
             }
             writer.close();
         } catch (IOException e) {
@@ -96,9 +108,20 @@ public class DES {
     }
 
     /**
-     * TODO: You need to write the DES encryption here.
-     * @param line
+     * DES encryption
+     * @param block One block of the cyphertext. It should be 64 bits as the requirement
+     * @param keyStr Decryption key
      */
+    private static BitSet DES_decrypt(BitSet block, StringBuilder keyStr) {
+        BitSet[] keys = keyExpansion(keyStr, "d");
+
+        permutation(block, DES.IP); // Initial permutation
+        BitSet result = feistelNetwork(16, block, keys);
+        permutation(result, DES.FP); // Final permutation
+
+        return result;
+    }
+
     //for debugging, transform a bitset to hex formation
     private static String BitSettoHex(BitSet block){
         StringBuilder hex = new StringBuilder();
@@ -118,21 +141,13 @@ public class DES {
         return ascii.toString();
     }
 
-    private static String DES_decrypt(String iVStr, String line) {
-        int blockSize = 8;
-        StringBuilder target = new StringBuilder(line.length());
-        int batch = line.length() / blockSize;// is it necessary to use ceil or floor?
-        BitSet fakeKey = StringtoBitSet("bbbbbbb");
-        BitSet[] keys = new BitSet[2];
-        keys[0] = fakeKey; keys[1] = fakeKey;
-
-
-        for(int i = 0; i < batch; i++){
-            BitSet block = StringtoBitSet(line.substring(i*blockSize,i*blockSize+blockSize-1));
-            String result = BitSettoAscii((feistelNetwork(16, block, keys)));
-            target.append(result);
-        }
-        return target.toString();
+    // Transform Hex string to BitSet
+    private static BitSet HextoBitSet(String input){
+        //choose input length carefully so that it fits in 64 bits
+        BigInteger bigint = new BigInteger(input, 16);
+        byte[] content = Arrays.copyOfRange(bigint.toByteArray(), 1, bigint.toByteArray().length);
+        BitSet bits = BitSet.valueOf(content);
+        return bits;
     }
 
     //StringtoBitset: transforms ascii text to bits representation
@@ -155,6 +170,7 @@ public class DES {
 
         return plainBlock;
     }
+
     //DESf: the f function used by feistel Network
     //todo: now it just returns all 0
     private static BitSet DESf(BitSet tmp0, BitSet key){
@@ -164,6 +180,7 @@ public class DES {
         ans.set(2);
         return ans;
     }
+
     //feistelnetwork: turns plain(64 bits) into cipher(64 bits), should be called with rounds=16 in DES
     //keys should be 56 bits BitSet
     private static BitSet feistelNetwork(int rounds, BitSet plainBlock, BitSet keys[]){
