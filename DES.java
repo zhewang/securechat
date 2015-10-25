@@ -83,7 +83,6 @@ public class DES {
 
             String IVStr = lines.get(0);
             BitSet lastCBC = HextoBitSet(IVStr);
-
             BitSet decrypted;
 
             for (int i = 1; i < lines.size(); i ++) {
@@ -95,10 +94,16 @@ public class DES {
                 BitSet tmp = block;
 
                 decrypted = DES_decrypt(block, keyStr);
-                decrypted.xor(lastCBC);
+                //decrypted.xor(lastCBC);
                 lastCBC = tmp;
 
-                writer.print(BitSettoAscii(decrypted));
+                System.out.println("Decrypted Block: ");
+                System.out.println(BitSettoHex(decrypted));
+                if(i == lines.size()-1) {
+                    writer.print(Delete_Padding_PKCS5(decrypted));
+                } else {
+                    writer.print(BitSettoAscii(decrypted));
+                }
             }
             writer.close();
         } catch (IOException e) {
@@ -143,8 +148,14 @@ public class DES {
         //choose input length carefully so that it fits in 64 bits
         BigInteger bigint = new BigInteger(input, 16);
         byte[] content = bigint.toByteArray();
-        if(content.length == 9) {
+        if(content.length > 8) {
             content = Arrays.copyOfRange(content, 1, content.length);
+        }
+        if(content.length < 8) {
+            byte[] tmp = content;
+            content = new byte[8];
+            for(int i = 0; i < tmp.length; i ++)
+                content[8-i-1] = tmp[tmp.length-i-1];
         }
         BitSet bits = BitSet.valueOf(content);
         return bits;
@@ -293,7 +304,8 @@ public class DES {
         for(int i = 0; i < 64; i ++) {
             CBC_IV.set(i, generator.nextBoolean());
         }
-        return CBC_IV;
+        //return CBC_IV;
+        return HextoBitSet("000fffffffffffff");
     }
 
     /**
@@ -309,6 +321,24 @@ public class DES {
             block = block+padding_char;
         }
         return block;
+    }
+
+    private static String Delete_Padding_PKCS5(BitSet block) {
+        byte[] b = block.toByteArray();
+        int padding_length = b[b.length-1];
+        int flag = 1;
+        for(int i = 0; i < padding_length; i ++) {
+            if(b[b.length-i-1] != padding_length) {
+                flag = 0;
+                break;
+            }
+        }
+        if(flag == 0) {
+            return new String(b);
+        } else {
+            byte [] subArray = Arrays.copyOfRange(b, 0, b.length-padding_length);
+            return new String(subArray);
+        }
     }
 
     /**
@@ -328,9 +358,11 @@ public class DES {
         ciphertext.append(BitSettoHex(lastCBC)+"\n");
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
+            System.out.print("Original Padded Block: ");
+            System.out.println(BitSettoHex(block));
 
             // Using CBC mode
-            block.xor(lastCBC);
+            //block.xor(lastCBC);
 
             // Encrypt
             permutation(block, DES.IP); // Initial permutation
