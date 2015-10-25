@@ -127,7 +127,7 @@ public class DES {
 
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line.substring(i*blockSize,i*blockSize+blockSize-1));
-            String result = feistelNetwork(16, block, keys);
+            String result = BitSettoAscii((feistelNetwork(16, block, keys)));
             target.append(result);
         }
         return target.toString();
@@ -164,14 +164,14 @@ public class DES {
     }
     //feistelnetwork: turns plain(64 bits) into cipher(64 bits), should be called with rounds=16 in DES
     //keys should be 56 bits BitSet
-    private static String feistelNetwork(int rounds, BitSet plainBlock, BitSet decrypt_keys[]){
+    private static BitSet feistelNetwork(int rounds, BitSet plainBlock, BitSet keys[]){
         BitSet tmp1 = plainBlock.get(0,31);
         BitSet tmp2 = plainBlock.get(32,63);
         BitSet tmp3;
         int i = 0;
         while(i < rounds){
 
-            tmp3 = DESf(tmp2,decrypt_keys[i]);
+            tmp3 = DESf(tmp2, keys[i]);
             tmp3.xor(tmp1);
             tmp1 = tmp2;
 
@@ -181,12 +181,22 @@ public class DES {
         tmp3 = tmp1;
         tmp1 = tmp2;
         tmp2 = tmp3;
-        System.out.println(BitSettoHex(tmp1));
-        System.out.println(BitSettoHex(tmp2));
-        StringBuilder cipher = new StringBuilder();
-        cipher.append(BitSettoAscii(tmp1));
-        cipher.append(BitSettoAscii(tmp2));
-        return cipher.toString();
+        BitSet cipher = new BitSet(64);
+        for(i = 0; i < 32; i ++){
+            if(tmp1.get(i) == true){
+                cipher.set(i);
+            }
+        }
+        for(i = 0; i < 32; i ++){
+            if(tmp2.get(i) == true){
+                cipher.set(i+32);
+            }
+        }
+        return cipher;
+        //StringBuilder cipher = new StringBuilder();
+        //cipher.append(BitSettoAscii(tmp1));
+        //cipher.append(BitSettoAscii(tmp2));
+        //return cipher.toString();
     }
 
     private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
@@ -215,7 +225,12 @@ public class DES {
      * @return BitSet[] A list of keys for each round
      */
     private static BitSet[] keyExpansion(StringBuilder keyStr, String type) {
-        return null;
+        BitSet[] keys = new BitSet[16];
+        BitSet fakeKey = StringtoBitSet("bbbbbbb");
+        for(int i = 0; i < 16; i ++){
+            keys[i] = fakeKey;
+        }
+        return keys;
     }
 
     private static void printBitSet(BitSet bset){
@@ -270,16 +285,17 @@ public class DES {
     private static String DES_encrypt(String line, StringBuilder keyStr) {
         int blockSize = 8; // 8 bytes = 64 bits
         int batch = (int)Math.ceil(line.length()*1.0 / blockSize);
-        StringBuilder ciphertext = new StringBuilder();
-        BitSet[] EncryptKeys = keyExpansion(keyStr, "e");
-        String line_padded = Padding_PKCS5(line);
 
+        BitSet[] EncryptKeys = keyExpansion(keyStr, "e");
+
+        String line_padded = Padding_PKCS5(line);
+        StringBuilder ciphertext = new StringBuilder();
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
             permutation(block, DES.IP); // Initial permutation
-            String result = feistelNetwork(16, block, EncryptKeys);
-            permutation(block, DES.FP); // Initial permutation
-            ciphertext.append(result+"\n");
+            BitSet result = feistelNetwork(16, block, EncryptKeys);
+            permutation(result, DES.FP); // Initial permutation
+            ciphertext.append(BitSettoHex(result)+"\n");
         }
         return ciphertext.toString();
     }
