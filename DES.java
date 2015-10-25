@@ -539,10 +539,16 @@ printBitSet(roundKey,6);
      * Transform a bitset to hex string
      */
     private static String BitSettoHex(BitSet block){
+        int hexlength = block.size()/4;
         StringBuilder hex = new StringBuilder();
         for(int k = 0; k < block.toByteArray().length; k++){
             String result = String.format("%02X",block.toByteArray()[k]);
             hex.append(result);
+        }
+        int endZeros = (hexlength - hex.length())/2;
+        while(endZeros > 0){
+            hex.append("00");
+            endZeros --;
         }
         return hex.toString();
     }
