@@ -2,7 +2,7 @@
 An encrypted communication program using DES and RSA algorithms.
 
 # How to run
-Put `java-getopt-1.0.14.jar` into the repo's root directory.
+Put `java-getopt-1.0.14.jar` (Download [here](https://github.com/arenn/java-getopt)) into the repo's root directory.
 
 ## DES
 * Compile: `javac -cp "java-getopt-1.0.14.jar" DES.java`
