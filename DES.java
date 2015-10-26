@@ -457,9 +457,9 @@ printBitSet(roundKey,6);
     /**
      * Print BitSet as 1s and 0s
      */
-    private static void printBitSet(BitSet bset){
+    private static void printBitSet(BitSet bset,int base){
         for(int i = 0; i < bset.size(); i ++) {
-            if(i % 8 == 0) {
+            if(i % base == 0) {
                 System.out.print(" ");
             }
             if(bset.get(i) == true) {
