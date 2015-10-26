@@ -170,6 +170,12 @@ public class DES {
             String IVStr = lines.get(0);
             BitSet lastCBC = HextoBitSet(IVStr);
             BitSet decrypted;
+            if(false == checkParity(HextoBitSet(keyStr.toString()))) {
+                writer.print("Parity check failed. The key is not a valid DES key.");
+                writer.close();
+                return;
+            }
+            BitSet[] keys = keyExpansion(keyStr, "d");
 
             for (int i = 1; i < lines.size(); i ++) {
                 String line = lines.get(i);
@@ -178,7 +184,7 @@ public class DES {
                 }
                 BitSet block = HextoBitSet(line);
 
-                decrypted = DES_decrypt(block, keyStr);
+                decrypted = DES_decrypt(block, keys);
                 decrypted.xor(lastCBC);
                 lastCBC = block;
 
@@ -200,8 +206,7 @@ public class DES {
      * @param block One block of the cyphertext. It should be 64 bits as the requirement
      * @param keyStr Decryption key
      */
-    private static BitSet DES_decrypt(BitSet block, StringBuilder keyStr) {
-        BitSet[] keys = keyExpansion(keyStr, "d");
+    private static BitSet DES_decrypt(BitSet block, BitSet[] keys) {
 
         permutation(block, DES.FP); // Initial permutation
         BitSet result = feistelNetwork(16, block, keys);
@@ -270,9 +275,41 @@ public class DES {
             for(int i = 0; i < 64; i ++) {
                 key.set(i, generator.nextBoolean());
             }
+            setParity(key);
         } while (isWeakKey(key));
         System.out.println(BitSettoHex(key));
         return;
+    }
+
+    private static void setParity(BitSet key) {
+        for(int i = 0; i < 8; i ++) {
+            int count = 0;
+            for(int j = 0; j < 8; j ++) {
+                if(true == key.get(i*8+j)){
+                    count ++;
+                }
+            }
+            if(count % 2 == 0) {
+                key.flip(i*8+7);
+            } else {
+                // Do nothing
+            }
+        }
+    }
+
+    private static boolean checkParity(BitSet key) {
+        for(int i = 0; i < 8; i ++) {
+            int count = 0;
+            for(int j = 0; j < 8; j ++) {
+                if(true == key.get(i*8+j)){
+                    count ++;
+                }
+            }
+            if(count % 2 == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean isWeakKey(BitSet key) {
@@ -407,7 +444,6 @@ public class DES {
      */
     private static BitSet[] keyExpansion(StringBuilder keyStr, String type) {
         //make sure keyStr is bitset of 64 size
-        // TODO: maybe do sanity check of parity, not done yet
         BitSet keyBlock64 = HextoBitSet(keyStr.toString());
         BitSet[] keyBlock56 = key_64_to_2_28(keyBlock64);
         BitSet[] keys = new BitSet[16];
