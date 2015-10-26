@@ -221,6 +221,12 @@ public class DES {
         try {
             PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 
+            if(false == checkParity(HextoBitSet(keyStr.toString()))) {
+                System.out.println("Parity check failed. The key is not a valid DES key.");
+                writer.close();
+                return;
+            }
+
             String encryptedText;
 
             // read input as a single string
