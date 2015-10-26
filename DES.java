@@ -407,9 +407,8 @@ public class DES {
      */
     private static BitSet[] keyExpansion(StringBuilder keyStr, String type) {
         //make sure keyStr is bitset of 64 size
-        //BitSet keyBlock64 = StringtoBitSet(keyStr.toString());
-        //maybe do sanity check of parity, not done yet
-        BitSet keyBlock64 = HextoBitSet("c82cea9ed93dfb8f");
+        // TODO: maybe do sanity check of parity, not done yet
+        BitSet keyBlock64 = HextoBitSet(keyStr.toString());
         BitSet[] keyBlock56 = key_64_to_2_28(keyBlock64);
         BitSet[] keys = new BitSet[16];
         for(int i = 0; i < 16; i ++){
