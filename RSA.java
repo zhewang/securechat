@@ -80,25 +80,8 @@ System.out.println(test);
         String pKeyStr = e.toString(16)+" "+n.toString(16);
         String sKeyStr = d.toString(16)+" "+n.toString(16);
 
-        System.out.format("Public Key: %s\n", strToHex(pKeyStr));
-        System.out.format("Private Key: %s\n", strToHex(sKeyStr));
-    }
-
-    private static String strToHex(String arg) {
-        StringBuilder hexSBuilder = new StringBuilder();
-        byte[] b = arg.getBytes();
-        for(int i = 0; i < b.length; i ++) {
-            hexSBuilder.append(String.format("%02X", b[i]));
-        }
-
-        return hexSBuilder.toString();
-    }
-
-    private static String hexToString(String hex) {
-        BigInteger bigint = new BigInteger(hex, 16);
-        byte[] content = bigint.toByteArray();
-        String str = new String(content);
-        return str;
+        System.out.format("Public Key: %s\n", pKeyStr);
+        System.out.format("Private Key: %s\n", sKeyStr);
     }
 
     public static boolean isPrime(BigInteger n) {
