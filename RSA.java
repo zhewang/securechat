@@ -34,16 +34,31 @@ public class RSA{
 
 
     }
-
+/*	public static void main(String[] args){
+	BigInteger test;
+BigInteger base = new BigInteger("14",16);
+BigInteger exp = new BigInteger("18",16); 
+BigInteger radix = new BigInteger("25",16);
+test = repeatedSquare(base, exp);
+System.out.println(test);
+test = getExpMod(base, exp,radix);
+System.out.println(test);
+}*///test encry and decry
 
 
     private static void RSAencrypt(StringBuilder m, StringBuilder nStr, StringBuilder eStr) {
-        // TODO Auto-generated method stub
+BigInteger m = new BigInteger(mStr.toString(),16);
+BigInteger n = new BigInteger(nStr.toString(),16);
+BigInteger e = new BigInteger(eStr.toString(),16);
+BigInteger c = getExpMod(m,e,n);
     }
 
     private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr,
             StringBuilder dStr){
-        // TODO Auto-generated method stub
+BigInteger c = new BigInteger(cStr.toString(),16);
+BigInteger n = new BigInteger(nStr.toString(),16);
+BigInteger d = new BigInteger(dStr.toString(),16);
+BigInteger m = getExpMod(c,d,n);
     }
 
     private static void genRSAkey(int bitSize) {
@@ -51,7 +66,27 @@ public class RSA{
         System.out.println("generate key");
         System.out.println(bitSize);
     }
-
+private static BigInteger repeatedSquare(BigInteger base, BigInteger exp){
+BigInteger ans = BigInteger.ONE;
+if(exp.compareTo(BigInteger.ZERO) == 0) return BigInteger.ONE;
+if(base.compareTo(BigInteger.ZERO) == 0) return BigInteger.ZERO;
+int length = exp.bitLength();
+BigInteger[] table = new BigInteger[length];
+table[0] = base;
+//System.out.println("length " + length + table[0]);
+for (int i = 1; i < length; i++)
+table[i] = table[i-1].multiply(table[i-1]);
+for (int j = 0; j < length; j++){
+	if(exp.testBit(j) == true)
+		ans = ans.multiply(table[j]);
+//System.out.println("ans " + ans);
+}
+return ans;
+}
+private static BigInteger getExpMod(BigInteger base, BigInteger exp, BigInteger mod){
+BigInteger ans = repeatedSquare(base,exp);
+return ans.mod(mod);
+}
 
     /**
      * This function Processes the Command Line Arguments.
