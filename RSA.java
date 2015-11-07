@@ -51,6 +51,10 @@ System.out.println(test);
         BigInteger n = new BigInteger(nStr.toString(),16);
         BigInteger e = new BigInteger(eStr.toString(),16);
         BigInteger c = getExpMod(m,e,n);
+
+        //System.out.format("m: %d, n: %d, e: %d\n", m,n,e);
+
+        System.out.println(c.toString(16));
     }
 
     private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr,
@@ -58,27 +62,37 @@ System.out.println(test);
         BigInteger c = new BigInteger(cStr.toString(),16);
         BigInteger n = new BigInteger(nStr.toString(),16);
         BigInteger d = new BigInteger(dStr.toString(),16);
+        //System.out.format("c: %d, n: %d, d: %d\n", c,n,d);
+
         BigInteger m = getExpMod(c,d,n);
+
+
+        System.out.println(m.toString(16));
     }
 
     private static void genRSAkey(int bitSize) {
-        BigInteger p = new BigInteger("1");
-        BigInteger q = new BigInteger("1");
+        BigInteger p = new BigInteger("47");
+        BigInteger q = new BigInteger("71");
         BigInteger[] primes = getRndPrime(bitSize);
         p = primes[0];
         q = primes[1];
 
-        //System.out.println(p);
-        //System.out.println(q);
-
         BigInteger n = p.multiply(q);
         BigInteger one = new BigInteger("1");
         BigInteger phi_n = p.subtract(one).multiply(q.subtract(one));
-        BigInteger e = new BigInteger("65537");
+        //BigInteger e = new BigInteger("65537");
+        BigInteger e = new BigInteger("79");
         BigInteger d = e.modInverse(phi_n);
 
-        String pKeyStr = e.toString(16)+" "+n.toString(16);
-        String sKeyStr = d.toString(16)+" "+n.toString(16);
+        //System.out.format("p: %d\n", p);
+        //System.out.format("q: %d\n", q);
+        //System.out.format("n: %d\n", n);
+        //System.out.format("phi: %d\n", phi_n);
+        //System.out.format("e: %d\n", e);
+        //System.out.format("d: %d\n", d);
+
+        String pKeyStr = "("+e.toString(16)+", "+n.toString(16)+")";
+        String sKeyStr = "("+d.toString(16)+", "+n.toString(16)+")";
 
         System.out.format("Public Key: %s\n", pKeyStr);
         System.out.format("Private Key: %s\n", sKeyStr);
@@ -94,6 +108,7 @@ System.out.println(test);
         int shift = rnd.nextInt(bits/2);
         //System.out.format("shift: %d\n", shift);
 
+        BigInteger e = new BigInteger("79");
         BigInteger bigOne = new BigInteger("1");
         BigInteger bigTwo = new BigInteger("2");
         BigInteger upper = bigTwo.pow(bits-shift).subtract(bigOne);
@@ -101,39 +116,25 @@ System.out.println(test);
 
         BigInteger p1 = upper.divide(bigTwo);
         //System.out.format("p1 start: %d\n", p1);
-        p1 = p1.nextProbablePrime();
+        do {
+            p1 = p1.nextProbablePrime();
+        } while (p1.gcd(e).intValue() != 1);
 
         BigInteger p2 = lower.divide(p1);
-        p2 = p2.nextProbablePrime();
+        do {
+            p2 = p2.nextProbablePrime();
+        } while(p2.gcd(e).intValue() != 1);
 
-        // TODO: Check if really prime
         BigInteger[] primes = new BigInteger[2];
         primes[0] = p1;
         primes[1] = p2;
+
         return primes;
     }
 
-    private static BigInteger repeatedSquare(BigInteger base, BigInteger exp){
-        BigInteger ans = BigInteger.ONE;
-        if(exp.compareTo(BigInteger.ZERO) == 0) return BigInteger.ONE;
-        if(base.compareTo(BigInteger.ZERO) == 0) return BigInteger.ZERO;
-        int length = exp.bitLength();
-        BigInteger[] table = new BigInteger[length];
-        table[0] = base;
-        //System.out.println("length " + length + table[0]);
-        for (int i = 1; i < length; i++)
-            table[i] = table[i-1].multiply(table[i-1]);
-        for (int j = 0; j < length; j++){
-            if(exp.testBit(j) == true)
-                ans = ans.multiply(table[j]);
-            //System.out.println("ans " + ans);
-        }
-        return ans;
-    }
-
     private static BigInteger getExpMod(BigInteger base, BigInteger exp, BigInteger mod){
-        BigInteger ans = repeatedSquare(base,exp);
-        return ans.mod(mod);
+        BigInteger ans = base.modPow(exp, mod);
+        return ans;
     }
 
     /**
