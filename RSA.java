@@ -32,40 +32,26 @@ public class RSA{
             RSAdecrypt(m, nStr, dStr);
         }
 
-
     }
-/*	public static void main(String[] args){
-	BigInteger test;
-BigInteger base = new BigInteger("14",16);
-BigInteger exp = new BigInteger("18",16);
-BigInteger radix = new BigInteger("25",16);
-test = repeatedSquare(base, exp);
-System.out.println(test);
-test = getExpMod(base, exp,radix);
-System.out.println(test);
-}*///test encry and decry
 
-
-    private static void RSAencrypt(StringBuilder mStr, StringBuilder nStr, StringBuilder eStr) {
+    private static void RSAencrypt(StringBuilder mStr,
+                                   StringBuilder nStr,
+                                   StringBuilder eStr) {
         BigInteger m = new BigInteger(mStr.toString(),16);
         BigInteger n = new BigInteger(nStr.toString(),16);
         BigInteger e = new BigInteger(eStr.toString(),16);
-        BigInteger c = getExpMod(m,e,n);
-
-        //System.out.format("m: %d, n: %d, e: %d\n", m,n,e);
+        BigInteger c = m.modPow(e,n);
 
         System.out.println(c.toString(16));
     }
 
-    private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr,
-            StringBuilder dStr){
+    private static void RSAdecrypt(StringBuilder cStr,
+                                   StringBuilder nStr,
+                                   StringBuilder dStr){
         BigInteger c = new BigInteger(cStr.toString(),16);
         BigInteger n = new BigInteger(nStr.toString(),16);
         BigInteger d = new BigInteger(dStr.toString(),16);
-        //System.out.format("c: %d, n: %d, d: %d\n", c,n,d);
-
-        BigInteger m = getExpMod(c,d,n);
-
+        BigInteger m = c.modPow(d,n);
 
         System.out.println(m.toString(16));
     }
@@ -80,26 +66,14 @@ System.out.println(test);
         BigInteger n = p.multiply(q);
         BigInteger one = new BigInteger("1");
         BigInteger phi_n = p.subtract(one).multiply(q.subtract(one));
-        //BigInteger e = new BigInteger("65537");
         BigInteger e = new BigInteger("79");
         BigInteger d = e.modInverse(phi_n);
-
-        //System.out.format("p: %d\n", p);
-        //System.out.format("q: %d\n", q);
-        //System.out.format("n: %d\n", n);
-        //System.out.format("phi: %d\n", phi_n);
-        //System.out.format("e: %d\n", e);
-        //System.out.format("d: %d\n", d);
 
         String pKeyStr = "("+e.toString(16)+", "+n.toString(16)+")";
         String sKeyStr = "("+d.toString(16)+", "+n.toString(16)+")";
 
         System.out.format("Public Key: %s\n", pKeyStr);
         System.out.format("Private Key: %s\n", sKeyStr);
-    }
-
-    public static boolean isPrime(BigInteger n) {
-        return true;
     }
 
     private static BigInteger[] getRndPrime(int bits) {
@@ -130,11 +104,6 @@ System.out.println(test);
         primes[1] = p2;
 
         return primes;
-    }
-
-    private static BigInteger getExpMod(BigInteger base, BigInteger exp, BigInteger mod){
-        BigInteger ans = base.modPow(exp, mod);
-        return ans;
     }
 
     /**
@@ -193,6 +162,5 @@ System.out.println(test);
         System.exit(exitStatus);
 
     }
-
 
 }
