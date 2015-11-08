@@ -57,16 +57,19 @@ public class RSA{
     }
 
     private static void genRSAkey(int bitSize) {
-        BigInteger p = new BigInteger("47");
-        BigInteger q = new BigInteger("71");
         BigInteger[] primes = getRndPrime(bitSize);
-        p = primes[0];
-        q = primes[1];
+        BigInteger p = primes[0];
+        BigInteger q = primes[1];
+
+        System.out.format("p: %d, q: %d\n", p, q);
 
         BigInteger n = p.multiply(q);
         BigInteger one = new BigInteger("1");
         BigInteger phi_n = p.subtract(one).multiply(q.subtract(one));
-        BigInteger e = new BigInteger("79");
+        BigInteger e = new BigInteger("65537");
+        while (phi_n.gcd(e).intValue() > 1) {
+            e = e.add(new BigInteger("2"));
+        }
         BigInteger d = e.modInverse(phi_n);
 
         String pKeyStr = "("+e.toString(16)+", "+n.toString(16)+")";
@@ -79,25 +82,9 @@ public class RSA{
     private static BigInteger[] getRndPrime(int bits) {
         SecureRandom rnd = new SecureRandom();
         rnd.setSeed(System.currentTimeMillis());
-        int shift = rnd.nextInt(bits/2);
-        //System.out.format("shift: %d\n", shift);
 
-        BigInteger e = new BigInteger("79");
-        BigInteger bigOne = new BigInteger("1");
-        BigInteger bigTwo = new BigInteger("2");
-        BigInteger upper = bigTwo.pow(bits-shift).subtract(bigOne);
-        BigInteger lower = bigTwo.pow(bits-1);
-
-        BigInteger p1 = upper.divide(bigTwo);
-        //System.out.format("p1 start: %d\n", p1);
-        do {
-            p1 = p1.nextProbablePrime();
-        } while (p1.gcd(e).intValue() != 1);
-
-        BigInteger p2 = lower.divide(p1);
-        do {
-            p2 = p2.nextProbablePrime();
-        } while(p2.gcd(e).intValue() != 1);
+        BigInteger p1 = new BigInteger(bits / 2, 100, rnd);
+        BigInteger p2 = new BigInteger(bits / 2, 100, rnd);
 
         BigInteger[] primes = new BigInteger[2];
         primes[0] = p1;
