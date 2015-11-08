@@ -156,7 +156,14 @@ public class RSA{
 
     private static void callUsage(int exitStatus) {
 
-        String useage = "";
+        String useage =
+            "    -h                     List all command line options\n" +
+            "    -k                     Generate a public/private key pair\n" +
+            "    -b <bit_size>          Specify the key size\n" +
+            "    -e <key>               Specify the key used to encrypt the input\n" +
+            "    -d <key>               Specify the key used to decrypt the input\n" +
+            "    -n <modulus>           Specify the modulus used to encrypt/decrypt\n" +
+            "    -i <input_value>       Specify the input value\n";
 
         System.err.println(useage);
         System.exit(exitStatus);
