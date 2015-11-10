@@ -61,8 +61,6 @@ public class RSA{
         BigInteger p = primes[0];
         BigInteger q = primes[1];
 
-        System.out.format("p: %d, q: %d\n", p, q);
-
         BigInteger n = p.multiply(q);
         BigInteger one = new BigInteger("1");
         BigInteger phi_n = p.subtract(one).multiply(q.subtract(one));
