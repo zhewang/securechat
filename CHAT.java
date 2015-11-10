@@ -22,7 +22,6 @@ public class CHAT {
     static String aliceModulus;
     static String bobModulus;
 
-    static String sessionKey;
 
     public static void main(String[] args) {
 
@@ -39,7 +38,7 @@ public class CHAT {
         System.out.println("Welcome to (soon to be) encrypted chat program.\nChat starting below:");
 
 
-        // Make thread to print out incoming messages...
+        // Make thread to print out incoming messages.
         ChatListenter chatListener = new ChatListenter();
         chatListener.start();
 
@@ -53,11 +52,12 @@ public class CHAT {
         String input = "";
 
         if(username.equals("alice")){
-            sessionKey = DESlib.genDESkey();
-            //System.out.println("bobModulus " + bobModulus + " publicKeyBob " + publicKeyBob);
-            String encryptedKey = RSAlib.RSAencrypt(new StringBuilder(sessionKey), new StringBuilder(bobModulus), new StringBuilder(publicKeyBob));
+            chatListener.sessionKey = DESlib.genDESkey();
+            String encryptedKey = RSAlib.RSAencrypt(
+                                       new StringBuilder(chatListener.sessionKey),
+                                       new StringBuilder(bobModulus),
+                                       new StringBuilder(publicKeyBob));
             input = encryptedKey;
-            //System.out.println("sessionkey " + sessionKey + " encrypted " + input);
             output.println(input);
             output.flush();
         }
@@ -65,13 +65,9 @@ public class CHAT {
         while(true){
 
             input = keyboard.nextLine();
-            //input = DESlib.DESlib_encrypt(input,new StringBuilder(sessionKey));
             input = username + ": " + input;
-            //des encryption
-            if(username.equals("bob")) {
-                sessionKey = chatListener.sessionKey;
-            }
-            input = DESlib.encrypt(input, new StringBuilder(sessionKey));
+            input = DESlib.encrypt(input,
+                                   new StringBuilder(chatListener.sessionKey));
             output.println(input);
             output.flush();
         }
@@ -212,11 +208,13 @@ public class CHAT {
             String inputStr;
             if(username.equals("bob")){
                 try {
-                    //					Read lines off the scanner
                     String encryptedkey = input.readLine();
-                    //System.out.println("bobModulus " + bobModulus + " publicKeyBob " + publicKeyBob);
-                    inputStr = RSAlib.RSAdecrypt(new StringBuilder(encryptedkey), new StringBuilder(bobModulus), new StringBuilder(privateKeyBob));
-                    System.out.println("received sessionkey " + encryptedkey + " decrypt to get " + inputStr);
+                    inputStr = RSAlib.RSAdecrypt(
+                            new StringBuilder(encryptedkey),
+                            new StringBuilder(bobModulus),
+                            new StringBuilder(privateKeyBob));
+
+                    //System.out.println("received sessionkey " + encryptedkey + " decrypt to get " + inputStr);
                     sessionKey = inputStr;
                     if(inputStr == null){
                         System.err.println("The other user has disconnected, closing program...");
@@ -230,16 +228,17 @@ public class CHAT {
             }
             while(true){
                 try {
-                    //					Read lines off the scanner
+                    // Read lines off the scanner
                     inputStr = input.readLine();
-                    //des decryption
-                    inputStr = DESlib.decrypt(new StringBuilder(sessionKey),
-                                              inputStr);
-                    System.out.println(inputStr);
                     if(inputStr == null){
                         System.err.println("The other user has disconnected, closing program...");
                         System.exit(1);
                     }
+
+                    //des decryption
+                    inputStr = DESlib.decrypt(new StringBuilder(sessionKey),
+                                              inputStr);
+                    System.out.println(inputStr);
 
                 } catch (IOException e) {
                     e.printStackTrace();
