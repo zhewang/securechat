@@ -232,11 +232,10 @@ public class CHAT {
                 try {
                     //					Read lines off the scanner
                     inputStr = input.readLine();
-                    System.out.println(inputStr);
-                    //String[] message = inputStr.split(":");
-                    //inputStr = DESlib.DESlib_decrypt(new StringBuilder(message[1]),new StringBuilder(sessionKey));
-                    //System.out.println(message[0] + ":" + message[1]);
                     //des decryption
+                    inputStr = DESlib.decrypt(new StringBuilder(sessionKey),
+                                              inputStr);
+                    System.out.println(inputStr);
                     if(inputStr == null){
                         System.err.println("The other user has disconnected, closing program...");
                         System.exit(1);

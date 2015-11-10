@@ -146,44 +146,37 @@ public class DESlib {
         22, 11, 4, 25};
 
 
-    public static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
-            StringBuilder outputFile) {
-        try {
-            PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
-            List<String> lines = Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset());
+    public static String decrypt(StringBuilder keyStr, String inputStr) {
+        String lines[] = inputStr.split("#");
 
-            String IVStr = lines.get(0);
-            BitSet lastCBC = HextoBitSet(IVStr);
-            BitSet decrypted;
-            if(false == checkParity(HextoBitSet(keyStr.toString()))) {
-                writer.print("Parity check failed. The key is not a valid DESkey.");
-                writer.close();
-                return;
-            }
-            BitSet[] keys = keyExpansion(keyStr, "d");
-
-            for (int i = 1; i < lines.size(); i ++) {
-                String line = lines.get(i);
-                if(line.length() != 16) {
-                    throw new IllegalArgumentException("Decrypt block size should be 64 bits.");
-                }
-                BitSet block = HextoBitSet(line);
-
-                decrypted = DES_decrypt(block, keys);
-                decrypted.xor(lastCBC);
-                lastCBC = block;
-
-                if(i == lines.size()-1) {
-                    writer.print(Delete_Padding_PKCS5(decrypted));
-                } else {
-                    writer.print(BitSettoAscii(decrypted));
-                }
-            }
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        String IVStr = lines[0];
+        BitSet lastCBC = HextoBitSet(IVStr);
+        BitSet decrypted;
+        if(false == checkParity(HextoBitSet(keyStr.toString()))) {
+            return "Parity check failed. The key is not a valid DESkey.";
         }
+        BitSet[] keys = keyExpansion(keyStr, "d");
 
+        StringBuilder output = new StringBuilder();
+
+        for (int i = 1; i < lines.length; i ++) {
+            String line = lines[i];
+            if(line.length() != 16) {
+                return "Decrypt block size should be 64 bits.";
+            }
+            BitSet block = HextoBitSet(line);
+
+            decrypted = DES_decrypt(block, keys);
+            decrypted.xor(lastCBC);
+            lastCBC = block;
+
+            if(i == lines.length-1) {
+                output.append(Delete_Padding_PKCS5(decrypted));
+            } else {
+                output.append(BitSettoAscii(decrypted));
+            }
+        }
+        return output.toString();
     }
 
     /**
@@ -214,7 +207,7 @@ public class DESlib {
         String line_padded = Padding_PKCS5(line);
         StringBuilder ciphertext = new StringBuilder();
         BitSet lastCBC = getCBC_IV();
-        ciphertext.append(BitSettoHex(lastCBC)+"\n");
+        ciphertext.append(BitSettoHex(lastCBC)+"#");
         for(int i = 0; i < batch; i++){
             BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
 
@@ -228,7 +221,7 @@ public class DESlib {
 
             lastCBC = result;
 
-            ciphertext.append(BitSettoHex(result)+"\n");
+            ciphertext.append(BitSettoHex(result)+"#");
         }
         return ciphertext.toString();
     }
