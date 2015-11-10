@@ -119,7 +119,7 @@ public class CHAT {
         LongOpt[] longopts = new LongOpt[2];
         longopts[0] = new LongOpt("alice", LongOpt.NO_ARGUMENT, null, 1);
         longopts[1] = new LongOpt("bob", LongOpt.NO_ARGUMENT, null, 2);
-        Getopt g = new Getopt("Chat Program", args, "p:i:a:b:m:n:", longopts);
+        Getopt g = new Getopt("Chat Program", args, "hp:i:a:b:m:n:", longopts);
         int c;
         String arg;
         while ((c = g.getopt()) != -1){
@@ -163,6 +163,7 @@ public class CHAT {
                 case 'h':
                     callUsage(0);
                 case '?':
+                    callUsage(0);
                     break; // getopt() already printed an error
                     //
                 default:
@@ -178,7 +179,16 @@ public class CHAT {
      */
     private static void callUsage(int exitStatus) {
 
-        String useage = "";
+        String useage =
+            "    -h                 List all command line options\n" +
+            "    --alice            Start as Alice\n" +
+            "    --bob              Start as Bob\n" +
+            "    -a <key>           Specify Alice's private key\n" +
+            "    -m <modulus>       Specify Alice's modulus\n" +
+            "    -b <key>           Specify Bob's private key\n" +
+            "    -n <modulus>       Specify Bob's modulus\n" +
+            "    -p <port>          Specify the port\n" +
+            "    -i <ip_address>    Specify the IP address\n";
 
         System.err.println(useage);
         System.exit(exitStatus);
