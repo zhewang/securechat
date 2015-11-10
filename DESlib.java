@@ -146,7 +146,7 @@ public class DESlib {
         22, 11, 4, 25};
 
 
-    private static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
+    public static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
             StringBuilder outputFile) {
         try {
             PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
@@ -156,7 +156,7 @@ public class DESlib {
             BitSet lastCBC = HextoBitSet(IVStr);
             BitSet decrypted;
             if(false == checkParity(HextoBitSet(keyStr.toString()))) {
-                writer.print("Parity check failed. The key is not a valid DESlibkey.");
+                writer.print("Parity check failed. The key is not a valid DESkey.");
                 writer.close();
                 return;
             }
@@ -185,33 +185,13 @@ public class DESlib {
         }
 
     }
-    static String DESlib_decrypt(StringBuilder inputLine, StringBuilder keyStr)
-    {
-        BitSet[] keys = keyExpansion(keyStr, "d");
-        BitSet lastCBC = new BitSet(64);
-        StringBuilder plaintext = new StringBuilder();
 
-        String line = inputLine.toString();
-        if(line.length() != 16) {
-            throw new IllegalArgumentException("Decrypt block size should be 64 bits.");
-        }
-        BitSet block = HextoBitSet(line);
-
-        BitSet decrypted = DES_decrypt(block, keys);
-        decrypted.xor(lastCBC);
-        lastCBC = block;
-
-        plaintext.append(Delete_Padding_PKCS5(decrypted));
-
-        return plaintext.toString();
-
-    }
     /**
      * DESlibdecryption
      * @param block One block of the cyphertext. It should be 64 bits as the requirement
      * @param keyStr Decryption key
      */
-    static BitSet DES_decrypt(BitSet block, BitSet[] keys) {
+    public static BitSet DES_decrypt(BitSet block, BitSet[] keys) {
 
         permutation(block, DESlib.FP); // Initial permutation
         BitSet result = feistelNetwork(16, block, keys);
@@ -220,63 +200,12 @@ public class DESlib {
         return result;
     }
 
-    private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
-            StringBuilder outputFile) {
-
-        try {
-            PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
-
-            if(false == checkParity(HextoBitSet(keyStr.toString()))) {
-                System.out.println("Parity check failed. The key is not a valid DESlibkey.");
-                writer.close();
-                return;
-            }
-
-            String encryptedText;
-
-            // read input as a single string
-            String plaintext = new String(Files.readAllBytes(Paths.get(inputFile.toString())));
-            encryptedText = DES_encrypt(plaintext, keyStr);
-            writer.print(encryptedText);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * The DESlibencryption function
      * @param line The input plaintext
      * @return String The encrypted cyphertext
      */
-    private static String DES_encrypt(String line, StringBuilder keyStr) {
-        int blockSize = 8; // 8 bytes = 64 bits
-        int batch = (int)Math.ceil(line.length()*1.0 / blockSize);
-
-        BitSet[] EncryptKeys = keyExpansion(keyStr, "e");
-
-        String line_padded = Padding_PKCS5(line);
-        StringBuilder ciphertext = new StringBuilder();
-        BitSet lastCBC = getCBC_IV();
-        ciphertext.append(BitSettoHex(lastCBC)+"\n");
-        for(int i = 0; i < batch; i++){
-            BitSet block = StringtoBitSet(line_padded.substring(i*blockSize,i*blockSize+blockSize));
-
-            // Using CBC mode
-            block.xor(lastCBC);
-
-            // Encrypt
-            permutation(block, DESlib.IP); // Initial permutation
-            BitSet result = feistelNetwork(16, block, EncryptKeys);
-            permutation(result, DESlib.FP); // Final permutation
-
-            lastCBC = result;
-
-            ciphertext.append(BitSettoHex(result)+"\n");
-        }
-        return ciphertext.toString();
-    }
-    static String DESlib_encrypt(String line, StringBuilder keyStr) {
+    public static String encrypt(String line, StringBuilder keyStr) {
         int blockSize = 8; // 8 bytes = 64 bits
         int batch = (int)Math.ceil(line.length()*1.0 / blockSize);
 
@@ -304,8 +233,7 @@ public class DESlib {
         return ciphertext.toString();
     }
 
-
-    static String genDESlibkey(){
+    public static String genDESkey(){
         BitSet key = new BitSet(64);
         SecureRandom generator = new SecureRandom();
         generator.setSeed(System.currentTimeMillis());
@@ -709,68 +637,6 @@ public class DESlib {
         }
 
         return plainBlock;
-    }
-
-    /**
-     * Processes the Command Line Arguments.
-     */
-    private static void pcl(String[] args, StringBuilder inputFile,
-            StringBuilder outputFile, StringBuilder keyString,
-            StringBuilder encrypt) {
-        /*
-         * http://www.urbanophile.com/arenn/hacking/getopt/gnu.getopt.Getopt.html
-         */
-        Getopt g = new Getopt("Chat Program", args, "hke:d:i:o:");
-        int c;
-        String arg;
-        while ((c = g.getopt()) != -1){
-            switch(c){
-                case 'o':
-                    arg = g.getOptarg();
-                    outputFile.append(arg);
-                    break;
-                case 'i':
-                    arg = g.getOptarg();
-                    inputFile.append(arg);
-                    break;
-                case 'e':
-                    arg = g.getOptarg();
-                    keyString.append(arg);
-                    encrypt.append("e");
-                    break;
-                case 'd':
-                    arg = g.getOptarg();
-                    keyString.append(arg);
-                    encrypt.append("d");
-                    break;
-                case 'k':
-                    genDESlibkey();
-                    break;
-                case 'h':
-                    callUseage(0);
-                case '?':
-                    break; // getopt() already printed an error
-                    //
-                default:
-                    break;
-            }
-        }
-
-    }
-
-    private static void callUseage(int exitStatus) {
-
-        String useage =
-            "    -h            List all command line options\n" +
-            "    -k            Generate a DESlibkey\n" +
-            "    -e <key>      Specify the key used to encrypt the file\n" +
-            "    -d <key>      Specify the key used to decrypt the file\n" +
-            "    -i <path>     Specify the input file\n" +
-            "    -o <path>     Specify the output file\n";
-
-        System.err.println(useage);
-        System.exit(exitStatus);
-
     }
 
 }

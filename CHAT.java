@@ -29,25 +29,21 @@ public class CHAT {
 
         @SuppressWarnings("resource")
         Scanner keyboard = new Scanner(System.in);
-        //		Process command line arguments
+        // Process command line arguments
         pcl(args);
         System.out.println(username);
-        /*String testKey = DESlib.genDESlibkey();
-          String encrypted = DESlib.DESlib_encrypt("asd",new StringBuilder(testKey));
-          System.out.println("des key " + testKey + " content " +encrypted);
-          String decry = DESlib.DESlib_decrypt(new StringBuilder(encrypted),new StringBuilder(testKey));*/
-        //		set up server, or join server
+        // set up server, or join server
         setupServer();
 
-        //		Set up username
+        // Set up username
         System.out.println("Welcome to (soon to be) encrypted chat program.\nChat starting below:");
 
 
-        //		Make thread to print out incoming messages...
+        // Make thread to print out incoming messages...
         ChatListenter chatListener = new ChatListenter();
         chatListener.start();
 
-        //		loop through sending and receiving messages
+        // loop through sending and receiving messages
         PrintStream output = null;
         try {
             output = new PrintStream(s.getOutputStream());
@@ -57,7 +53,7 @@ public class CHAT {
         String input = "";
 
         if(username.equals("alice")){
-            sessionKey = DESlib.genDESlibkey();
+            sessionKey = DESlib.genDESkey();
             //System.out.println("bobModulus " + bobModulus + " publicKeyBob " + publicKeyBob);
             String encryptedKey = RSAlib.RSAencrypt(new StringBuilder(sessionKey), new StringBuilder(bobModulus), new StringBuilder(publicKeyBob));
             input = encryptedKey;
@@ -65,12 +61,17 @@ public class CHAT {
             output.println(input);
             output.flush();
         }
+
         while(true){
 
             input = keyboard.nextLine();
             //input = DESlib.DESlib_encrypt(input,new StringBuilder(sessionKey));
             input = username + ": " + input;
             //des encryption
+            if(username.equals("bob")) {
+                sessionKey = chatListener.sessionKey;
+            }
+            input = DESlib.encrypt(input, new StringBuilder(sessionKey));
             output.println(input);
             output.flush();
         }
@@ -193,6 +194,7 @@ public class CHAT {
      * client. It prints out the message on screen.
      */
     static private class ChatListenter implements Runnable {
+        public String sessionKey;
         private Thread t;
         ChatListenter(){
         }
@@ -207,7 +209,7 @@ public class CHAT {
                 System.err.println("System would not make buffer reader");
                 System.exit(1);
             }
-            String inputStr,sessionKey="";
+            String inputStr;
             if(username.equals("bob")){
                 try {
                     //					Read lines off the scanner
@@ -230,9 +232,10 @@ public class CHAT {
                 try {
                     //					Read lines off the scanner
                     inputStr = input.readLine();
-                    String[] message = inputStr.split(":");
+                    System.out.println(inputStr);
+                    //String[] message = inputStr.split(":");
                     //inputStr = DESlib.DESlib_decrypt(new StringBuilder(message[1]),new StringBuilder(sessionKey));
-                    System.out.println(message[0] + ":" + message[1]);
+                    //System.out.println(message[0] + ":" + message[1]);
                     //des decryption
                     if(inputStr == null){
                         System.err.println("The other user has disconnected, closing program...");
