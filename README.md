@@ -25,7 +25,7 @@ Put `java-getopt-1.0.14.jar` (Download [here](https://github.com/arenn/java-geto
 
 
 
-## Group member
-* Zhe Wang, Yang Liu
+## Group Members
+* [Zhe Wang](https://github.com/zhewang), [Yang Liu](https://github.com/YangLiuAZ)
 * https://github.com/zhewang/securechat
 
